@@ -5,16 +5,13 @@ import glob
 import pickle
 
 
-f=open("ref_name.pkl","rb")
-ref_dictt=pickle.load(f)
-f.close()
 f=open("ref_embed.pkl","rb")
-embed_dictt=pickle.load(f)
+embed_dict=pickle.load(f)
 f.close()
 
 known_face_encodings = []
 known_face_names = []
-for ref_id, embed_list in embed_dictt.items():
+for ref_id, embed_list in embed_dict.items():
     for my_embed in embed_list:
         known_face_encodings +=[my_embed]
         known_face_names += [ref_id]
@@ -51,7 +48,7 @@ while True:
         cv2.rectangle(frame, (left, top_s), (right, bottom), (0, 0, 255), 2)
         cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
         font = cv2.FONT_HERSHEY_DUPLEX
-        cv2.putText(frame, ref_dictt[name], (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+        cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
     font = cv2.FONT_HERSHEY_DUPLEX
     cv2.imshow('Video', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):

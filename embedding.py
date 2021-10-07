@@ -2,59 +2,57 @@ import sys
 import cv2
 import face_recognition
 import pickle
+import os
 
-name=input("enter name")
-ref_id=input("enter id")
+name_array = {'Ijmert': 11, 'Bert': 5, 'Andreas': 0, 'Paco':0, 'Steven':0, 'Mathias':0}
+
+
+def countDigits(string):
+    digit_count = 0
+    digit_array = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    for c in string:
+        if c in digit_array:
+            digit_count += 1
+
+    return digit_count
 
 try:
-    f = open("ref_name.pkl","rb")
-    ref_dictt = pickle.load(f)
+    f = open("ref_embed.pkl", "rb")
+    embed_dict = pickle.load(f)
     f.close()
 except:
-    ref_dictt={}
-    ref_dictt[ref_id]=name
-    f=open("ref_name.pkl","wb")
-    pickle.dump(ref_dictt,f)
-    f.close()
-try:
-    f=open("ref_embed.pkl","rb")
-    embed_dictt=pickle.load(f)
-    f.close()
-except:
-    embed_dictt={}
+    embed_dict={}
 
-for i in range(5):
 
-    key = cv2.waitKey(1)
-    webcam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-    while True:
+name_dict = {}
+dirs = os.listdir('images/')
+for filename in dirs:
+    name = filename[:filename.index('.jpg') - countDigits(filename)]
+    if name not in name_dict:
+        name_dict[name] = 1
+    else:
+        name_dict[name] += 1
 
-        check, frame = webcam.read()
-        cv2.imshow("Capturing", frame)
-        small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-        rgb_small_frame = small_frame[:, :, ::-1]
 
-        key = cv2.waitKey(1)
-        if key == ord('s'):
-            face_locations = face_recognition.face_locations(rgb_small_frame)
-            if face_locations != []:
-                face_encoding = face_recognition.face_encodings(frame)[0]
-                if ref_id in embed_dictt:
-                    embed_dictt[ref_id] += [face_encoding]
+for name in name_dict:
+    if name not in embed_dict:
+        try:
+            for i in range(1, name_dict[name]+1):
+                image_string = "images/%s%i.jpg" % (name, i)
+                print(image_string)
+                image = cv2.imread(image_string)
+                face_locations = face_recognition.face_locations(image)
+                if face_locations:
+                    face_encoding = face_recognition.face_encodings(image)[0]
+                if name in embed_dict:
+                    embed_dict[name] += [face_encoding]
                 else:
-                    embed_dictt[ref_id] = [face_encoding]
-                webcam.release()
-                cv2.waitKey(1)
-                cv2.destroyAllWindows()
-                break
-        elif key == ord('q'):
-            print("Turning off camera.")
-            webcam.release()
-            print("Camera off.")
-            print("Program ended.")
-            cv2.destroyAllWindows()
-            break
+                    embed_dict[name] = [face_encoding]
 
-f = open("ref_embed.pkl", "wb")
-pickle.dump(embed_dictt, f)
-f.close()
+        except:
+            print("Something went wrong embedding %s" %name)
+
+if embed_dict != {}:
+    f = open("ref_embed.pkl", "wb")
+    pickle.dump(embed_dict, f)
+    f.close()
